@@ -2,6 +2,8 @@
     'use strict';
 
     window.addEventListener('load', () => {
+        console.log('Script loaded successfully.'); // Debugging
+
         // Default settings
         const defaultSettings = {
             keybindColors: {
@@ -28,6 +30,8 @@
             keybindButtonOutline: 'true',
             keybindButtonPositionX: '20', // Horizontal position
             keybindButtonPositionY: '50', // Vertical position
+            customCSS: '', // Added custom CSS to default settings
+            sliderColor: '#007BFF', // Default slider color
         };
 
         // Load saved settings or use defaults
@@ -47,6 +51,8 @@
         const savedButtonOutline = localStorage.getItem('keybindButtonOutline') || defaultSettings.keybindButtonOutline;
         const savedButtonPositionX = localStorage.getItem('keybindButtonPositionX') || defaultSettings.keybindButtonPositionX;
         const savedButtonPositionY = localStorage.getItem('keybindButtonPositionY') || defaultSettings.keybindButtonPositionY;
+        const savedCustomCSS = localStorage.getItem('customCSS') || defaultSettings.customCSS; // Load saved CSS
+        const savedSliderColor = localStorage.getItem('sliderColor') || defaultSettings.sliderColor; // Load saved slider color
 
         const keys = [
             { id: 'W', label: 'W', keyCode: 'KeyW' },
@@ -73,6 +79,8 @@
         let buttonOutline = savedButtonOutline === 'true';
         let buttonPositionX = parseInt(savedButtonPositionX, 10); // Horizontal position
         let buttonPositionY = parseInt(savedButtonPositionY, 10); // Vertical position
+        let customCSS = savedCustomCSS; // Load saved CSS
+        let sliderColor = savedSliderColor; // Load saved slider color
 
         let buttonColors = { ...savedColors };
 
@@ -499,30 +507,97 @@
         resetContainer.appendChild(resetButton);
         menu.appendChild(resetContainer);
 
-        document.body.appendChild(menu);
+        // Add Live CSS Injector to the menu
+        const cssInjectorContainer = document.createElement('div');
+        cssInjectorContainer.style.display = 'flex';
+        cssInjectorContainer.style.flexDirection = 'column';
+        cssInjectorContainer.style.alignItems = 'center';
 
-        // Event listener for Ctrl + O
-        document.addEventListener('keydown', function(event) {
-            if (event.ctrlKey && event.key === 'o') {
-                event.preventDefault();
-                colorMenuVisible = !colorMenuVisible;
-                if (colorMenuVisible) {
-                    menu.style.display = 'grid';
-                    setTimeout(() => {
-                        menu.style.opacity = '1';
-                        menu.style.transform = 'translate(-50%, -50%) scale(1)';
-                    }, 10);
-                } else {
-                    menu.style.opacity = '0';
-                    menu.style.transform = 'translate(-50%, -50%) scale(0.9)';
-                    setTimeout(() => {
-                        menu.style.display = 'none';
-                    }, 300);
-                }
-            }
+        const cssInjectorLabel = document.createElement('label');
+        cssInjectorLabel.innerText = 'Live CSS Injector:';
+        cssInjectorLabel.style.marginBottom = '5px';
+
+        const cssTextarea = document.createElement('textarea');
+        cssTextarea.style.width = '100%';
+        cssTextarea.style.height = '100px';
+        cssTextarea.style.marginBottom = '10px';
+        cssTextarea.style.backgroundColor = isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)';
+        cssTextarea.style.color = isDarkMode ? 'white' : 'black';
+        cssTextarea.style.border = 'none';
+        cssTextarea.style.borderRadius = '5px';
+        cssTextarea.style.padding = '10px';
+        cssTextarea.value = customCSS; // Load saved CSS
+
+        const applyCssButton = document.createElement('button');
+        applyCssButton.innerText = 'Apply CSS';
+        applyCssButton.style.backgroundColor = isDarkMode ? '#444' : '#ddd';
+        applyCssButton.style.color = isDarkMode ? 'white' : 'black';
+        applyCssButton.style.border = 'none';
+        applyCssButton.style.borderRadius = '5px';
+        applyCssButton.style.padding = '10px';
+        applyCssButton.style.cursor = 'pointer';
+
+        applyCssButton.addEventListener('click', () => {
+            customCSS = cssTextarea.value;
+            localStorage.setItem('customCSS', customCSS); // Save CSS to localStorage
+            applyCustomCSS(customCSS); // Apply the CSS
         });
 
+        cssInjectorContainer.appendChild(cssInjectorLabel);
+        cssInjectorContainer.appendChild(cssTextarea);
+        cssInjectorContainer.appendChild(applyCssButton);
+        menu.appendChild(cssInjectorContainer);
+
+        // Add Slider Color Picker to the menu
+        const sliderColorContainer = document.createElement('div');
+        sliderColorContainer.style.display = 'flex';
+        sliderColorContainer.style.flexDirection = 'column';
+        sliderColorContainer.style.alignItems = 'center';
+
+        const sliderColorLabel = document.createElement('label');
+        sliderColorLabel.innerText = 'Slider Color: ';
+        sliderColorLabel.style.marginBottom = '5px';
+
+        const sliderColorInput = document.createElement('input');
+        sliderColorInput.type = 'color';
+        sliderColorInput.value = sliderColor;
+        sliderColorInput.style.marginBottom = '10px';
+
+        sliderColorInput.addEventListener('input', function() {
+            sliderColor = sliderColorInput.value;
+            localStorage.setItem('sliderColor', sliderColor); // Save slider color to localStorage
+            updateSliderColor(sliderColor); // Apply the new slider color
+        });
+
+        sliderColorContainer.appendChild(sliderColorLabel);
+        sliderColorContainer.appendChild(sliderColorInput);
+        menu.appendChild(sliderColorContainer);
+
+        document.body.appendChild(menu);
+
+        // Apply saved CSS on page load
+        if (customCSS) {
+            applyCustomCSS(customCSS);
+        }
+
+        // Apply saved slider color on page load
+        updateSliderColor(sliderColor);
+
         // Helper functions
+        function applyCustomCSS(css) {
+            const styleElement = document.createElement('style');
+            styleElement.type = 'text/css';
+            styleElement.innerHTML = css;
+            document.head.appendChild(styleElement);
+        }
+
+        function updateSliderColor(color) {
+            const sliders = document.querySelectorAll('input[type="range"]');
+            sliders.forEach(slider => {
+                slider.style.accentColor = color; // Modern browsers support accent-color
+            });
+        }
+
         function updateButtonSize(newSize) {
             Object.values(buttonElements).forEach(button => {
                 button.style.width = `${newSize}px`;
@@ -607,6 +682,8 @@
             buttonOutline = defaultSettings.keybindButtonOutline === 'true';
             buttonPositionX = parseInt(defaultSettings.keybindButtonPositionX, 10);
             buttonPositionY = parseInt(defaultSettings.keybindButtonPositionY, 10);
+            customCSS = defaultSettings.customCSS; // Reset CSS to default
+            sliderColor = defaultSettings.sliderColor; // Reset slider color to default
 
             // Update UI
             keys.forEach(key => {
@@ -623,6 +700,7 @@
             updateButtonsVisibility(buttonsVisible);
             updateButtonOutline(buttonOutline);
             updateButtonPosition();
+            updateSliderColor(sliderColor); // Reset slider color
 
             // Update settings menu
             pressedColorInput.value = pressedColor;
@@ -637,6 +715,8 @@
             buttonOutlineToggle.innerText = buttonOutline ? 'Disable Outline' : 'Enable Outline';
             positionXSlider.value = buttonPositionX;
             positionYSlider.value = buttonPositionY;
+            cssTextarea.value = customCSS; // Reset CSS textarea
+            sliderColorInput.value = sliderColor; // Reset slider color input
 
             // Save defaults to localStorage
             localStorage.setItem('keybindColors', JSON.stringify(buttonColors));
@@ -654,6 +734,8 @@
             localStorage.setItem('keybindButtonOutline', buttonOutline.toString());
             localStorage.setItem('keybindButtonPositionX', buttonPositionX.toString());
             localStorage.setItem('keybindButtonPositionY', buttonPositionY.toString());
+            localStorage.setItem('customCSS', customCSS); // Save default CSS
+            localStorage.setItem('sliderColor', sliderColor); // Save default slider color
         }
 
         // Add Export Settings Button
@@ -707,6 +789,8 @@
                 keybindButtonOutline: localStorage.getItem('keybindButtonOutline') || defaultSettings.keybindButtonOutline,
                 keybindButtonPositionX: localStorage.getItem('keybindButtonPositionX') || defaultSettings.keybindButtonPositionX,
                 keybindButtonPositionY: localStorage.getItem('keybindButtonPositionY') || defaultSettings.keybindButtonPositionY,
+                customCSS: localStorage.getItem('customCSS') || defaultSettings.customCSS, // Include custom CSS in export
+                sliderColor: localStorage.getItem('sliderColor') || defaultSettings.sliderColor, // Include slider color in export
             };
 
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(settings));
@@ -747,11 +831,34 @@
                 localStorage.setItem('keybindButtonOutline', settings.keybindButtonOutline);
                 localStorage.setItem('keybindButtonPositionX', settings.keybindButtonPositionX);
                 localStorage.setItem('keybindButtonPositionY', settings.keybindButtonPositionY);
+                localStorage.setItem('customCSS', settings.customCSS); // Import custom CSS
+                localStorage.setItem('sliderColor', settings.sliderColor); // Import slider color
 
                 // Reload the page to apply new settings
                 window.location.reload();
             };
             reader.readAsText(file);
         }
+
+        // Event listener for Ctrl + O
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.key === 'o') {
+                event.preventDefault();
+                colorMenuVisible = !colorMenuVisible;
+                if (colorMenuVisible) {
+                    menu.style.display = 'grid';
+                    setTimeout(() => {
+                        menu.style.opacity = '1';
+                        menu.style.transform = 'translate(-50%, -50%) scale(1)';
+                    }, 10);
+                } else {
+                    menu.style.opacity = '0';
+                    menu.style.transform = 'translate(-50%, -50%) scale(0.9)';
+                    setTimeout(() => {
+                        menu.style.display = 'none';
+                    }, 300);
+                }
+            }
+        });
     });
 })();
